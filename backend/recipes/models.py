@@ -60,7 +60,7 @@ class Recipe(models.Model):
     )
     image = models.ImageField(
         'Картинка',
-        upload_to='recipes/',
+        upload_to='media/recipes/images/',
         null=False,
     )
     cooking_time = models.IntegerField(validators=[MinValueValidator(1)])
@@ -114,19 +114,26 @@ class TagsRecipe(models.Model):
 
 
 class Shopping_carts(models.Model):
-    name = models.CharField(
-        max_length=256,
-        verbose_name='Foodstuff name',
-        blank=False,
-        null=False,
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='shopping_carts_user'
     )
-    image = models.ImageField(
-        'Картинка',
-        upload_to='recipes/',
-        blank=True,
-        null=True,
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='shopping_carts_recipe',
     )
-    cooking_time = models.IntegerField(validators=[MinValueValidator(1)])
 
-    def __str__(self) -> str:
-        return self.name
+
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='favorite_carts_user'
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='favorite_recipe',
+    )

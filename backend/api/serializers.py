@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from recipes.models import (Ingredient, Tag, Recipe,
-                            IngredientsRecipe)
+                            IngredientsRecipe, Shopping_carts, Favorite)
 from django.core.files.base import ContentFile
 from users.serializers import NewUserSerializer
 import base64
@@ -92,3 +92,22 @@ class RecipeSerializer(serializers.ModelSerializer):
         instance.tags.set(tags)
         instance.save()
         return instance
+
+
+class ShoppingCartsSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True, source='recipe.id',)
+    name = serializers.CharField(read_only=True, source='recipe.name')
+    image = serializers.CharField(read_only=True, source='recipe.image',)
+    cooking_time = serializers.IntegerField(
+        read_only=True, source='recipe.cooking_time',
+    )
+
+    class Meta:
+        model = Shopping_carts
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class FavoriteSerializer(ShoppingCartsSerializer):
+    class Meta(ShoppingCartsSerializer.Meta):
+        model = Favorite
+        fields = ('id', 'name', 'image', 'cooking_time')
