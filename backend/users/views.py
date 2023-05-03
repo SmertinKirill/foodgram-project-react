@@ -5,10 +5,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from api.pagination import CustomPagination
-from api.permissions import IsAuthenticated
 
 from .models import Follow, User
-from .serializers import FollowSerializer, NewUserSerializer
+from .serializers import (FollowSerializer, NewUserSerializer,
+                          FollowValidateSerializer)
+from rest_framework.permissions import IsAuthenticated
 
 
 class UserViewSet(UserViewSet):
@@ -23,8 +24,7 @@ class UserViewSet(UserViewSet):
     )
     def subscriptions(self, request, pk=None):
         user = request.user
-        follows = Follow.objects.filter(user=user)
-        authors = [follow.author for follow in follows]
+        authors = User.objects.filter(following__user=user)
         serializer = FollowSerializer(
             authors, many=True, context={"request": request}
         )
@@ -35,23 +35,17 @@ class UserViewSet(UserViewSet):
         detail=True,
         methods=['post', 'delete'],
         permission_classes=(IsAuthenticated,),
+        serializer_class=FollowValidateSerializer,
     )
     def subscribe(self, request, id):
         author = get_object_or_404(User, id=id)
-        print('!!! ', request.__dict__)
         if request.method == 'DELETE':
             Follow.objects.get(user=request.user, author=author).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-        if Follow.objects.filter(user=request.user, author=author).exists():
-            return Response(
-                'Вы уже подписаны на данного пользователя!',
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        if request.user == author:
-            return Response(
-                'Подписка на себя невозможна!',
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        serializer = self.get_serializer(
+            data={"author_id": id},
+            context={"request": request})
+        serializer.is_valid(raise_exception=True)
         Follow.objects.create(
             user=request.user,
             author=author,

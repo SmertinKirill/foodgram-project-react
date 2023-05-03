@@ -2,15 +2,10 @@ from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers, validators
 from .models import Follow, User
 from recipes.models import Recipe
+from django.shortcuts import get_object_or_404
 
 
 class NewUserSerializer(UserSerializer):
-    username = serializers.CharField(
-        required=True,
-        validators=[validators.UniqueValidator(
-            queryset=User.objects.all()
-        )]
-    )
     is_subscribe = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -28,6 +23,23 @@ class NewUserSerializer(UserSerializer):
 
 
 class NewUserCreateSerializer(UserCreateSerializer):
+    username = serializers.CharField(
+        required=True,
+        validators=[validators.UniqueValidator(
+            queryset=User.objects.all(),
+            lookup='iexact',
+            message='Пользователь с таким username уже сущестует'
+        )]
+    )
+    email = serializers.EmailField(
+        required=True,
+        validators=[validators.UniqueValidator(
+            queryset=User.objects.all(),
+            lookup='iexact',
+            message='Пользователь с таким email уже сущестует'
+        )]
+    )
+
     class Meta(UserCreateSerializer.Meta):
         model = User
         fields = (
@@ -60,8 +72,25 @@ class FollowSerializer(serializers.ModelSerializer):
 
     def get_recipes(self, obj):
         recipes_limit = (
-            int(self.context.get('request').GET.get('recipes_limit'))
+            int(self.context.get('request').GET.get('recipes_limit', 7))
         )
         recipes = Recipe.objects.filter(author=obj)[:recipes_limit]
         serializer = RecipeForFollowsSerializer(recipes, many=True)
         return serializer.data
+
+
+class FollowValidateSerializer(serializers.Serializer):
+    author_id = serializers.IntegerField()
+
+    def validate_author_id(self, value):
+        request = self.context.get('request')
+        author = get_object_or_404(User, id=value)
+        if request.user == author:
+            raise serializers.ValidationError(
+                'Нельзя подписаться на самого себя'
+            )
+        if Follow.objects.filter(user=request.user, author=author).exists():
+            raise serializers.ValidationError(
+                'Вы уже подписаны на данного пользователя'
+            )
+        return author

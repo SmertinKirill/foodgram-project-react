@@ -9,12 +9,12 @@ from recipes.models import (Favorite, Ingredient, IngredientsRecipe, Recipe,
                             Shopping_carts, Tag)
 
 from .pagination import CustomPagination
-from .permissions import (IsAdminOrAuthorOrReadOnly, IsAdminOrReadOnly,
-                          IsAuthenticated)
+from .permissions import IsAdminOrAuthorOrReadOnly, IsAdminOrReadOnly
 from .serializers import (FavoriteSerializer, IngredientSerializer,
                           RecipeReadSerializer, ShoppingCartsSerializer,
                           TagSerializer, RecipeCreateSerializer)
 from rest_framework.filters import SearchFilter
+from rest_framework.permissions import IsAuthenticated
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
@@ -45,23 +45,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return RecipeCreateSerializer
 
     def get_queryset(self):
+        queryset = Recipe.objects.all()
         is_favorited = self.request.query_params.get('is_favorited')
         is_in_shopping_cart = self.request.query_params.get(
             'is_in_shopping_cart'
         )
-        user = self.request.user
-        if is_in_shopping_cart == '1':
-            return Recipe.objects.filter(shopping_carts__user=user)
-        if is_favorited == '1':
-            return Recipe.objects.filter(favorite__user=user)
-        queryset = Recipe.objects.all()
         tags = self.request.query_params.getlist('tags')
         author = self.request.query_params.get('author')
+        user = self.request.user
         if tags:
             queryset = queryset.filter(tags__slug__in=tags)
         if author:
             queryset = queryset.filter(author=author)
-
+        if is_in_shopping_cart == '1':
+            return Recipe.objects.filter(shopping_carts__user=user)
+        if is_favorited == '1':
+            return Recipe.objects.filter(favorite__user=user)
         return queryset
 
     @action(
@@ -110,9 +109,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 sh.write('Список покупок:' + '\n')
                 for ingr in ingredients:
                     sh.write(
-                        ingr['ingredient__name'] +
-                        ' ' + str(ingr['amount']) +
-                        ' ' + ingr['ingredient__measurement_unit'] + '\n'
+                        ingr['ingredient__name'] + ' '
+                        + str(ingr['amount']) + ' '
+                        + ingr['ingredient__measurement_unit'] + '\n'
                     )
             response = FileResponse(
                 open('shopping_list.txt', 'rb'), content_type='text/plain'
