@@ -1,24 +1,28 @@
-from rest_framework import viewsets
-from .serializers import (IngredientSerializer, TagSerializer,
-                          ShoppingCartsSerializer, RecipeSerializer,
-                          FavoriteSerializer)
-from recipes.models import (Ingredient, Tag, Recipe, Shopping_carts,
-                            IngredientsRecipe, Favorite)
-from .permissions import (IsAdminOrReadOnly,
-                          IsAdminOrAuthorOrReadOnly, IsAuthenticated)
-from .pagination import CustomPagination
-from rest_framework.response import Response
-from rest_framework import status
-from django.shortcuts import get_object_or_404
-from rest_framework.decorators import action
 from django.db.models import Sum
 from django.http import FileResponse
+from django.shortcuts import get_object_or_404
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from recipes.models import (Favorite, Ingredient, IngredientsRecipe, Recipe,
+                            Shopping_carts, Tag)
+
+from .pagination import CustomPagination
+from .permissions import (IsAdminOrAuthorOrReadOnly, IsAdminOrReadOnly,
+                          IsAuthenticated)
+from .serializers import (FavoriteSerializer, IngredientSerializer,
+                          RecipeReadSerializer, ShoppingCartsSerializer,
+                          TagSerializer, RecipeCreateSerializer)
+from rest_framework.filters import SearchFilter
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (SearchFilter,)
+    search_fields = ('^name',)
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -30,18 +34,42 @@ class TagViewSet(viewsets.ModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = CustomPagination
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
     permission_classes = (IsAdminOrAuthorOrReadOnly, )
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    def get_serializer_class(self):
+        if self.request.method in ['GET', 'HEAD', 'OPTIONS']:
+            return RecipeReadSerializer
+        return RecipeCreateSerializer
+
+    def get_queryset(self):
+        is_favorited = self.request.query_params.get('is_favorited')
+        is_in_shopping_cart = self.request.query_params.get(
+            'is_in_shopping_cart'
+        )
+        user = self.request.user
+        if is_in_shopping_cart == '1':
+            return Recipe.objects.filter(shopping_carts__user=user)
+        if is_favorited == '1':
+            return Recipe.objects.filter(favorite__user=user)
+        queryset = Recipe.objects.all()
+        tags = self.request.query_params.getlist('tags')
+        author = self.request.query_params.get('author')
+        if tags:
+            queryset = queryset.filter(tags__slug__in=tags)
+        if author:
+            queryset = queryset.filter(author=author)
+
+        return queryset
 
     @action(
         detail=True,
         methods=['post', 'delete'],
         permission_classes=(IsAuthenticated,)
     )
-    def shopping_carts(self, request, pk):
+    def shopping_cart(self, request, pk):
         user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
         if request.method == 'POST':
@@ -66,13 +94,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(
         detail=False,
         methods=['get'],
-        permission_classes=(IsAuthenticated,)
+        permission_classes=(IsAuthenticated,),
     )
     def download_shopping_cart(self, request):
         user = request.user
         if Shopping_carts.objects.filter(user=user).exists():
             ingredients = IngredientsRecipe.objects.filter(
-                recipe__shopping_carts_recipe__user=user
+                recipe__shopping_carts__user=user
             ).values(
                 'ingredient__name',
                 'ingredient__measurement_unit'
@@ -86,7 +114,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
                         ' ' + str(ingr['amount']) +
                         ' ' + ingr['ingredient__measurement_unit'] + '\n'
                     )
-            response = FileResponse('shopping_list.txt')
+            response = FileResponse(
+                open('shopping_list.txt', 'rb'), content_type='text/plain'
+            )
+            response['Content-Disposition'] = (
+                'attachment;filename="shopping_list.txt"'
+            )
             return response
         return Response(
             'Список покупок пуст.',
@@ -96,11 +129,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
-        permission_classes=(IsAuthenticated,)
+        permission_classes=(IsAuthenticated,),
+        url_path='favorite'
     )
     def favorite(self, request, pk):
         user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
+        if request.method == 'GET':
+            Favorite.objects.get(user=user, recipe=recipe)
         if request.method == 'POST':
             favorite = Favorite.objects.create(
                 user=user,

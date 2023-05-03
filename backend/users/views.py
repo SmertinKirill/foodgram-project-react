@@ -1,21 +1,25 @@
-from .models import User, Follow
-from .serializers import NewUserSerializer, FollowSerializer
-from djoser.views import UserViewSet
-from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
+from djoser.views import UserViewSet
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.response import Response
+
 from api.pagination import CustomPagination
+from api.permissions import IsAuthenticated
+
+from .models import Follow, User
+from .serializers import FollowSerializer, NewUserSerializer
 
 
 class UserViewSet(UserViewSet):
     queryset = User.objects.all()
     serializer_class = NewUserSerializer
-    pagination_class = CustomPagination
 
     @action(
         detail=False,
         methods=['get'],
+        permission_classes=(IsAuthenticated,),
+        pagination_class=CustomPagination,
     )
     def subscriptions(self, request, pk=None):
         user = request.user
@@ -30,6 +34,7 @@ class UserViewSet(UserViewSet):
     @action(
         detail=True,
         methods=['post', 'delete'],
+        permission_classes=(IsAuthenticated,),
     )
     def subscribe(self, request, id):
         author = get_object_or_404(User, id=id)
@@ -55,25 +60,3 @@ class UserViewSet(UserViewSet):
             author, context={"request": request}
         )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    # @action(
-    #     detail=True,
-    #     methods=['delete'],
-    #     url_name='subscribe',
-    # )
-    # def unsubscribe(self, request, id):
-    #     print('DDD')
-    #     author = get_object_or_404(User, id=id)
-    #     if not Follow.objects.filter(user=request.user,
-    #                                  author=author).exists():
-    #         return Response(
-    #             'Вы не подписаны на данного пользователя!',
-    #             status=status.HTTP_400_BAD_REQUEST
-    #         )
-    #     if request.user == author:
-    #         return Response(
-    #             'Отписаться от себя невозможно!',
-    #             status=status.HTTP_400_BAD_REQUEST
-    #         )
-    #     Follow.objects.get(user=request.user, author=author).delete()
-    #     return Response(status=status.HTTP_204_NO_CONTENT)

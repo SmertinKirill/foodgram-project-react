@@ -1,6 +1,8 @@
-from django.db import models
-from users.models import User
 from django.core.validators import MinValueValidator
+from django.db import models
+
+from users.models import User
+
 from .validators import color_regex
 
 
@@ -104,12 +106,10 @@ class TagsRecipe(models.Model):
     tag = models.ForeignKey(
         Tag,
         on_delete=models.CASCADE,
-        related_name='tags_recipe',
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='tags_recipe',
     )
 
 
@@ -117,12 +117,12 @@ class Shopping_carts(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='shopping_carts_user'
+        related_name='shopping_carts'
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='shopping_carts_recipe',
+        related_name='shopping_carts',
     )
 
 
@@ -130,10 +130,10 @@ class Favorite(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='favorite_carts_user'
+        related_name='favorite'
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='favorite_recipe',
+        related_name='favorite',
     )

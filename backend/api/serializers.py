@@ -1,15 +1,17 @@
-from rest_framework import serializers
-from recipes.models import (Ingredient, Tag, Recipe,
-                            IngredientsRecipe, Shopping_carts, Favorite)
-from django.core.files.base import ContentFile
-from users.serializers import NewUserSerializer
 import base64
+
+from django.core.files.base import ContentFile
+from rest_framework import serializers
+
+from recipes.models import (Favorite, Ingredient, IngredientsRecipe, Recipe,
+                            Shopping_carts, Tag)
+from users.serializers import NewUserSerializer
 
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = ('id', 'name', 'color', 'slug')
+        fields = '__all__'
 
 
 class Base64ImageField(serializers.ImageField):
@@ -31,16 +33,62 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 class IngredientWithAmountSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='ingredient.id')
+    name = serializers.CharField(source='ingredient.name')
+    measurement_unit = serializers.CharField(
+        source='ingredient.measurement_unit'
+    )
+
+    class Meta:
+        model = IngredientsRecipe
+        fields = ('id', 'name',  'measurement_unit', 'amount')
+
+
+class IngredientWithAmountCreateSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source='ingredient.id')
 
     class Meta:
         model = IngredientsRecipe
         fields = ('id', 'amount')
 
 
-class RecipeSerializer(serializers.ModelSerializer):
+class RecipeReadSerializer(serializers.ModelSerializer):
     author = NewUserSerializer(read_only=True)
     image = Base64ImageField(required=True, allow_null=True)
     ingredients = IngredientWithAmountSerializer(
+        source='ingredients_recipe',
+        many=True
+    )
+    tags = TagSerializer(many=True, read_only=True)
+    cooking_time = serializers.IntegerField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
+    is_favorited = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Recipe
+        fields = (
+                    'id', 'ingredients', 'tags', 'author', 'image',
+                    'name', 'is_favorited', 'is_in_shopping_cart',
+                    'text', 'cooking_time'
+                )
+    read_only_fields = ('author',)
+
+    def get_is_favorited(self, obj):
+        user = self.context.get('request').user
+        if not user.is_authenticated:
+            return False
+        return Recipe.objects.filter(favorite__user=user, id=obj.id).exists()
+
+    def get_is_in_shopping_cart(self, obj):
+        user = self.context.get('request').user
+        if not user.is_authenticated:
+            return False
+        return user.shopping_carts.filter(recipe=obj.id).exists()
+
+
+class RecipeCreateSerializer(serializers.ModelSerializer):
+    author = NewUserSerializer(read_only=True)
+    image = Base64ImageField(required=True, allow_null=True)
+    ingredients = IngredientWithAmountCreateSerializer(
         source='ingredients_recipe',
         many=True
     )
@@ -49,12 +97,14 @@ class RecipeSerializer(serializers.ModelSerializer):
         required=True,
         many=True
     )
+    cooking_time = serializers.IntegerField()
 
     class Meta:
         model = Recipe
-        fields = ('id', 'ingredients', 'tags', 'author', 'image',
-                  'name', 'text', 'cooking_time')
-    read_only_fields = ('author',)
+        fields = (
+                    'id', 'ingredients', 'tags', 'author', 'image',
+                    'name', 'text', 'cooking_time'
+                )
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients_recipe')
