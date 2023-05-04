@@ -1,8 +1,9 @@
-from djoser.serializers import UserCreateSerializer, UserSerializer
-from rest_framework import serializers, validators
-from .models import Follow, User
-from recipes.models import Recipe
 from django.shortcuts import get_object_or_404
+from djoser.serializers import UserCreateSerializer, UserSerializer
+from recipes.models import Recipe
+from rest_framework import serializers, validators
+
+from .models import Follow, User
 
 
 class NewUserSerializer(UserSerializer):
@@ -93,4 +94,12 @@ class FollowValidateSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'Вы уже подписаны на данного пользователя'
             )
-        return author
+        return author.id
+
+    def create(self, validated_data):
+        author_id = validated_data['author_id']
+        follow = Follow.objects.create(
+            user=self.context['request'].user,
+            author_id=author_id
+        )
+        return follow

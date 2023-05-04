@@ -1,10 +1,9 @@
 import base64
 
 from django.core.files.base import ContentFile
-from rest_framework import serializers
-
 from recipes.models import (Favorite, Ingredient, IngredientsRecipe, Recipe,
                             Shopping_carts, Tag)
+from rest_framework import serializers
 from users.serializers import NewUserSerializer
 
 
@@ -40,7 +39,7 @@ class IngredientWithAmountSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IngredientsRecipe
-        fields = ('id', 'name',  'measurement_unit', 'amount')
+        fields = ('id', 'name', 'measurement_unit', 'amount',)
 
 
 class IngredientWithAmountCreateSerializer(serializers.ModelSerializer):
@@ -66,10 +65,9 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = (
-                    'id', 'ingredients', 'tags', 'author', 'image',
-                    'name', 'is_favorited', 'is_in_shopping_cart',
-                    'text', 'cooking_time'
-                )
+            'id', 'ingredients', 'tags', 'author', 'image', 'name',
+            'is_favorited', 'is_in_shopping_cart', 'text', 'cooking_time'
+        )
     read_only_fields = ('author',)
 
     def get_is_favorited(self, obj):
@@ -102,9 +100,8 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = (
-                    'id', 'ingredients', 'tags', 'author', 'image',
-                    'name', 'text', 'cooking_time'
-                )
+            'id', 'ingredients', 'tags', 'author', 'image', 'name', 'text', 'cooking_time',
+        )
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients_recipe')

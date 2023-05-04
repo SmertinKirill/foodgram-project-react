@@ -1,15 +1,14 @@
+from api.pagination import CustomPagination
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from api.pagination import CustomPagination
-
 from .models import Follow, User
-from .serializers import (FollowSerializer, NewUserSerializer,
-                          FollowValidateSerializer)
-from rest_framework.permissions import IsAuthenticated
+from .serializers import (FollowSerializer, FollowValidateSerializer,
+                          NewUserSerializer)
 
 
 class UserViewSet(UserViewSet):
@@ -46,10 +45,7 @@ class UserViewSet(UserViewSet):
             data={"author_id": id},
             context={"request": request})
         serializer.is_valid(raise_exception=True)
-        Follow.objects.create(
-            user=request.user,
-            author=author,
-        )
+        serializer.create(validated_data=serializer.validated_data)
         serializer = FollowSerializer(
             author, context={"request": request}
         )

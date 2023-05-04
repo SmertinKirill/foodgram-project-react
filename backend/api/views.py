@@ -1,28 +1,28 @@
 from django.db.models import Sum
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.response import Response
-
+from django_filters.rest_framework import DjangoFilterBackend
 from recipes.models import (Favorite, Ingredient, IngredientsRecipe, Recipe,
                             Shopping_carts, Tag)
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
+from .filters import IngredientFilter, RecipeFilter
 from .pagination import CustomPagination
 from .permissions import IsAdminOrAuthorOrReadOnly, IsAdminOrReadOnly
 from .serializers import (FavoriteSerializer, IngredientSerializer,
-                          RecipeReadSerializer, ShoppingCartsSerializer,
-                          TagSerializer, RecipeCreateSerializer)
-from rest_framework.filters import SearchFilter
-from rest_framework.permissions import IsAuthenticated
+                          RecipeCreateSerializer, RecipeReadSerializer,
+                          ShoppingCartsSerializer, TagSerializer)
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (SearchFilter,)
-    search_fields = ('^name',)
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = IngredientFilter
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -35,6 +35,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = CustomPagination
     queryset = Recipe.objects.all()
     permission_classes = (IsAdminOrAuthorOrReadOnly, )
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = RecipeFilter
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -50,13 +52,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         is_in_shopping_cart = self.request.query_params.get(
             'is_in_shopping_cart'
         )
-        tags = self.request.query_params.getlist('tags')
-        author = self.request.query_params.get('author')
         user = self.request.user
-        if tags:
-            queryset = queryset.filter(tags__slug__in=tags)
-        if author:
-            queryset = queryset.filter(author=author)
         if is_in_shopping_cart == '1':
             return Recipe.objects.filter(shopping_carts__user=user)
         if is_favorited == '1':
