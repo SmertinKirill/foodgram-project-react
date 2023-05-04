@@ -98,8 +98,7 @@ class FollowValidateSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         author_id = validated_data['author_id']
-        follow = Follow.objects.create(
+        return Follow.objects.create(
             user=self.context['request'].user,
             author_id=author_id
         )
-        return follow

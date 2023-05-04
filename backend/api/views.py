@@ -47,7 +47,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return RecipeCreateSerializer
 
     def get_queryset(self):
-        queryset = Recipe.objects.all()
         is_favorited = self.request.query_params.get('is_favorited')
         is_in_shopping_cart = self.request.query_params.get(
             'is_in_shopping_cart'
@@ -57,7 +56,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Recipe.objects.filter(shopping_carts__user=user)
         if is_favorited == '1':
             return Recipe.objects.filter(favorite__user=user)
-        return queryset
+        return Recipe.objects.all()
 
     @action(
         detail=True,
@@ -67,24 +66,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def shopping_cart(self, request, pk):
         user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
-        if request.method == 'POST':
-            shopping_cart = Shopping_carts.objects.create(
-                user=user,
-                recipe=recipe,
-            )
-            serializer = ShoppingCartsSerializer(
-                shopping_cart, context={"request": request}
-            )
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
         if request.method == 'DELETE':
             Shopping_carts.objects.get(
                 user=user,
                 recipe=recipe,
             ).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+        shopping_cart = Shopping_carts.objects.create(
+            user=user,
+            recipe=recipe,
+        )
+        serializer = ShoppingCartsSerializer(
+            shopping_cart, context={"request": request}
+        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(
         detail=False,
@@ -130,20 +125,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def favorite(self, request, pk):
         user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
-        if request.method == 'GET':
-            Favorite.objects.get(user=user, recipe=recipe)
-        if request.method == 'POST':
-            favorite = Favorite.objects.create(
-                user=user,
-                recipe=recipe,
-            )
-            serializer = FavoriteSerializer(
-                favorite, context={"request": request}
-            )
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED
-            )
         if request.method == 'DELETE':
             if not Favorite.objects.filter(user=user).exists():
                 return Response(
@@ -155,3 +136,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 recipe=recipe,
             ).delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+        favorite = Favorite.objects.create(
+            user=user,
+            recipe=recipe,
+        )
+        serializer = FavoriteSerializer(
+            favorite, context={"request": request}
+        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
