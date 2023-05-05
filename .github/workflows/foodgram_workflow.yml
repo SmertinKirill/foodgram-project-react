@@ -65,8 +65,10 @@ jobs:
         script: |
           sudo systemctl stop nginx 
           sudo docker-compose stop
+          sudo docker system prune
           sudo docker image rm ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:v1
           sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:v1
+          sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgram_frontend:v1
           sudo rm .env
           touch .env
           echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
