@@ -22,7 +22,7 @@ services:
   frontend:
     image: deflorian99/foodgram_frontend:v1
     volumes:
-      - ./frontend/:/app/result_build/
+      - ../frontend/:/app/result_build/
     depends_on:
       - backend
   nginx:
