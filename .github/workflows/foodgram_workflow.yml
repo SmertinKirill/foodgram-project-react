@@ -65,6 +65,7 @@ jobs:
           sudo docker-compose stop
           sudo docker-compose down -v
           sudo docker image rm backend
+          sudo docker system prune -a
           sudo docker pull deflorian99/foodgram_backend:v1
           sudo docker pull deflorian99/foodgram_frontend:v1
           sudo rm .env
