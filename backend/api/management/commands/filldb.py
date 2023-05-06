@@ -8,7 +8,7 @@ from recipes.models import Ingredient
 class Command(BaseCommand):
     def handle(self, *args, **options):
 
-        p = 'backend/data/'
+        p = 'data/'
 
         with contextlib.ExitStack() as stack:
             ingredients = csv.DictReader(
