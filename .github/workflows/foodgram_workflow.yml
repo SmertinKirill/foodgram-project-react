@@ -63,10 +63,10 @@ jobs:
         username: ${{ secrets.USER }}
         key: ${{ secrets.SSH_KEY }}
         script: |
+          sudo docker image rm ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:v1
           sudo systemctl stop nginx 
           sudo docker-compose stop
           sudo docker system prune
-          sudo docker image rm ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:v1
           sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgram_backend:v1
           sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgram_frontend:v1
           sudo rm .env
