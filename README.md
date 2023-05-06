@@ -1,4 +1,4 @@
-![yamdb_workflow](https://github.com/SmertinKirill/foodgram-project-react/actions/workflows/foodgram.yml/badge.svg)
+![foodgram](https://github.com/SmertinKirill/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg)
 
 # Foodgram - Продуктовый помощник
 Сервис для публикации рецептов.
