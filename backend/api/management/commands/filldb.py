@@ -1,5 +1,5 @@
 import contextlib
-import csv
+import json
 
 from django.core.management import BaseCommand
 from recipes.models import Ingredient
@@ -11,12 +11,11 @@ class Command(BaseCommand):
         p = 'data/'
 
         with contextlib.ExitStack() as stack:
-            ingredients = csv.DictReader(
-                stack.enter_context(open(f'{p}ingredients.csv', 'r'))
-            )
+            with stack.enter_context(open(f'{p}ingredients.json', 'r')) as f:
+                ingredients = json.load(f)
 
-            for row in ingredients:
+            for ingredient in ingredients:
                 Ingredient.objects.get_or_create(
-                    name=row['name'],
-                    measurement_unit=row['measurement_unit']
+                    name=ingredient['name'],
+                    measurement_unit=ingredient['measurement_unit']
                 )
