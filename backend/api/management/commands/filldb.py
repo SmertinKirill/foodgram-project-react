@@ -17,7 +17,6 @@ class Command(BaseCommand):
 
             for row in ingredients:
                 Ingredient.objects.get_or_create(
-                    id=int(row['id']),
                     name=row['name'],
                     measurement_unit=row['measurement_unit']
                 )
