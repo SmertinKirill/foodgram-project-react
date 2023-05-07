@@ -10,12 +10,18 @@ Foodgram - онлайн-сервис, позволяющий пользоват�
 - [SmertinKirill](https://github.com/SmertinKirill)
 
 ## Технологии:
-    Django==3.2
-    Django-rest-framework==3.12.4
-    Python==3.7.16
-    PostgreSQL
-    Docker
-    YandexCloud
+![Django](https://img.shields.io/badge/Django-3.2-44B78B?logo=django)
+![Django REST framework](https://img.shields.io/badge/Django%20REST%20framework-3.12.4-EBB639?logo=django)
+![Python](https://img.shields.io/badge/Python-3.7.16-3776AB?logo=python)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-13-336791?logo=postgresql)
+![Docker](https://img.shields.io/badge/Docker-20.10.7-2496ED?logo=docker)
+![Yandex.Cloud](https://img.shields.io/badge/Yandex.Cloud-Active-FFA000?logo=yandex)
+
+
+### Техническое описание проекта
++ http://158.160.63.111/ - сам проект
++ http://158.160.63.111/admin/ - админ панель
++ http://158.160.63.111/api/docs/ - подключена документация API
 
 ### Главная страница
 Содержимое главной страницы - список первых шести рецептов, отсортированных по дате публикации (от новых к старым). Остальные рецепты доступны на следующих страницах. Внизу страницы есть пагинация.
