@@ -8,11 +8,16 @@ class IngredientAdmin(admin.ModelAdmin):
 
 
 class RecipeAdmin(admin.ModelAdmin):
-    list_filter = ('name', 'author', )
+    list_filter = ('name', 'author', 'tags')
     list_display = ('name', 'author', 'favorites_count')
 
     def favorites_count(self, obj):
         return obj.favorite.count()
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj=obj)
+        fieldsets += (('Количество добавлений в избранное', {'fields': ('favorites_count',)}),)
+        return fieldsets
 
 
 admin.site.register(Ingredient, IngredientAdmin)
