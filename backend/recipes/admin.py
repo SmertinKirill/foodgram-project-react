@@ -4,22 +4,24 @@ from recipes.models import (Ingredient, IngredientsRecipe, Recipe,
 
 
 class IngredientAdmin(admin.ModelAdmin):
-    list_filter = ('name')
+    list_filter = ('name',)
 
 
 class RecipeAdmin(admin.ModelAdmin):
     list_filter = ('name', 'author', 'tags')
     list_display = ('name', 'author', 'favorites_count')
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('name', 'text', 'author', 'image', 'cooking_time',
+                       'ingredients', 'tags'),
+        }),
+    )
+
+    readonly_fields = ('favorites_count',)
 
     def favorites_count(self, obj):
         return obj.favorite.count()
-
-    def get_fields(self, request, obj=None):
-        fields = super().get_fields(request, obj=obj)
-        if obj is None:
-            return fields
-        fields += ('favorites_count',)
-        return fields
 
 
 admin.site.register(Ingredient, IngredientAdmin)
