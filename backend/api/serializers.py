@@ -95,7 +95,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         required=True,
         many=True
     )
-    cooking_time = serializers.IntegerField()
 
     class Meta:
         model = Recipe
