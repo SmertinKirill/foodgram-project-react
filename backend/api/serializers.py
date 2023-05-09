@@ -112,6 +112,8 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients_recipe')
         tags_data = validated_data.pop('tags')
+        cooking_time = validated_data.get('cooking_time')
+        self.validate_cooking_time(cooking_time)
         recipe = Recipe.objects.create(**validated_data)
         for ingredient_data in ingredients_data:
             print('!!!', ingredient_data)
