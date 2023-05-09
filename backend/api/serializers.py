@@ -96,7 +96,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         required=True,
         many=True
     )
-    cooking_time = serializers.IntegerField(validators=[MinValueValidator(1)])
 
     class Meta:
         model = Recipe
@@ -104,12 +103,16 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             'id', 'ingredients', 'tags', 'author', 'image', 'name', 'text', 'cooking_time',
         )
 
+    def validate_cooking_time(self, value):
+        if value < 1:
+            raise serializers.ValidationError('Время не может быть отрицательным!')
+        return value
+
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients_recipe')
         tags_data = validated_data.pop('tags')
         recipe = Recipe.objects.create(**validated_data)
         for ingredient_data in ingredients_data:
-            print('!!!', ingredient_data)
             ingredient_id = ingredient_data['ingredient']['id']
             amount = ingredient_data['amount']
             IngredientsRecipe.objects.create(
