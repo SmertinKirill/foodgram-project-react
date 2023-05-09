@@ -1,4 +1,4 @@
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from users.models import User
 
@@ -64,7 +64,9 @@ class Recipe(models.Model):
         upload_to='media/recipes/images/',
         null=False,
     )
-    cooking_time = models.IntegerField(validators=[MinValueValidator(1)])
+    cooking_time = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10000)]
+    )
     ingredients = models.ManyToManyField(
         Ingredient,
         through='IngredientsRecipe',
@@ -78,7 +80,7 @@ class Recipe(models.Model):
     )
 
     class Meta:
-        ordering = ['id']
+        ordering = ['-id']
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
