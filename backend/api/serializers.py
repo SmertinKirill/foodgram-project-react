@@ -95,12 +95,18 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         required=True,
         many=True
     )
+    cooking_time = serializers.IntegerField()
 
     class Meta:
         model = Recipe
         fields = (
             'id', 'ingredients', 'tags', 'author', 'image', 'name', 'text', 'cooking_time',
         )
+
+    def validate_cooking_time(self, value):
+        if value <= 0:
+            raise serializers.ValidationError('Время не может быть отрицательным!')
+        return value
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients_recipe')
