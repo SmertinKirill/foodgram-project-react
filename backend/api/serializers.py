@@ -5,7 +5,6 @@ from recipes.models import (Favorite, Ingredient, IngredientsRecipe, Recipe,
                             Shopping_carts, Tag)
 from rest_framework import serializers
 from users.serializers import NewUserSerializer
-from django.core.validators import MinValueValidator
 
 
 class TagSerializer(serializers.ModelSerializer):
