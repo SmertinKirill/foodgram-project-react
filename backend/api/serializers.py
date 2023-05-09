@@ -5,6 +5,7 @@ from recipes.models import (Favorite, Ingredient, IngredientsRecipe, Recipe,
                             Shopping_carts, Tag)
 from rest_framework import serializers
 from users.serializers import NewUserSerializer
+from django.core.validators import MinValueValidator
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -95,7 +96,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         required=True,
         many=True
     )
-    cooking_time = serializers.IntegerField()
+    cooking_time = serializers.IntegerField(validators=[MinValueValidator(1)])
 
     class Meta:
         model = Recipe
@@ -104,7 +105,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         )
 
     def validate_cooking_time(self, value):
-        if value <= 0:
+        if value < 0:
             raise serializers.ValidationError('Время не может быть отрицательным!')
         return value
 
